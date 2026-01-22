@@ -55,6 +55,17 @@ export const Typeahead: FunctionComponent<TypeaheadProps> = ({
       const keyboardEvent = e as KeyboardEvent;
       const currentValue = inputValueRef.current;
       if (keyboardEvent.key === 'Enter' && currentValue.trim()) {
+        // Check if the dropdown menu is open (has highlighted item)
+        const menu = wrapperRef.current?.querySelector('[role="listbox"]');
+        const highlightedItem = menu?.querySelector(
+          '[data-highlighted="true"], .cds--list-box__menu-item--highlighted',
+        );
+
+        // If there's a highlighted item in the dropdown, let ComboBox handle it
+        if (highlightedItem) {
+          return;
+        }
+
         const isExistingItem = items.some((item) => item.name === currentValue);
         const isCreateNew = currentValue.includes('Create new');
         if (!isExistingItem && !isCreateNew) {
@@ -92,8 +103,8 @@ export const Typeahead: FunctionComponent<TypeaheadProps> = ({
   const handleChange = useCallback(
     (data: ComboOnChangeData<{ id: string; text: string }>) => {
       const selected = data.selectedItem ?? null;
-
       if (customInputHandledRef.current) {
+        customInputHandledRef.current = false;
         return;
       }
 
@@ -191,7 +202,15 @@ export const Typeahead: FunctionComponent<TypeaheadProps> = ({
           if (menu?.item?.id === CREATE_NEW_ITEM) {
             return true;
           }
+          // If no input value, show all items
           if (!inputValue) return true;
+
+          // If input value matches the selected item exactly, show all items
+          if (selectedItem && inputValue === selectedItem.name) {
+            return true;
+          }
+
+          // Otherwise, filter based on input
           return menu?.item?.text?.toLowerCase().includes(inputValue.toLowerCase()) ?? false;
         }}
       />
